@@ -71,6 +71,9 @@ model User {
   name         String
   email        String       @unique
   passwordHash String
+  phone        String?
+  defaultCity  String?
+  defaultAddress String?
   role         UserRole     @default(CLIENT)
   sellerStatus SellerStatus?
   store        Store?
@@ -88,6 +91,14 @@ model User {
   updatedAt    DateTime     @updatedAt
 
   @@index([role, sellerStatus])
+}
+
+model PlatformSettings {
+  id                    String   @id
+  deliveryFeeAbidjan    Int      @default(2000)
+  deliveryFeeGrandBassam Int     @default(1000)
+  deliveryFeeOther      Int      @default(3500)
+  updatedAt             DateTime @updatedAt
 }
 
 model Category {

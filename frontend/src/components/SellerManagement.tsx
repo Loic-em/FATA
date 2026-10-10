@@ -152,7 +152,7 @@ export default function SellerManagement({ active }: { active: SellerTab }) {
     }
   }
 
-  if (loading) return <section className="workspace-panel full-panel" aria-busy="true">Chargement de votre boutique…</section>;
+  if (loading) return <section className="workspace-panel full-panel loading-state" aria-busy="true"><span className="loading-spinner"/> Chargement de votre boutique…</section>;
 
   if (active === "Ma boutique") {
     return <section className="workspace-panel full-panel">

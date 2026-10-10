@@ -77,9 +77,15 @@ export class OrdersService {
       return { productId: product.id, name: product.name, price: product.price, quantity };
     });
 
+    const [platformSettings] = await this.prisma.$queryRaw<{ deliveryFeeAbidjan: number; deliveryFeeGrandBassam: number; deliveryFeeOther: number }[]>`
+      SELECT "deliveryFeeAbidjan", "deliveryFeeGrandBassam", "deliveryFeeOther"
+      FROM "PlatformSettings" WHERE "id" = 'main'
+    `;
     const shipping = dto.deliveryType === "PICKUP"
       ? 0
-      : dto.city === "Abidjan" ? 2000 : dto.city === "Grand-Bassam" ? 1000 : 3500;
+      : dto.city === "Abidjan" ? platformSettings?.deliveryFeeAbidjan ?? 2000
+        : dto.city === "Grand-Bassam" ? platformSettings?.deliveryFeeGrandBassam ?? 1000
+          : platformSettings?.deliveryFeeOther ?? 3500;
 
     const order = await this.prisma.$transaction(async tx => {
       const created = await tx.order.create({
@@ -159,7 +165,7 @@ export class OrdersService {
       SELECT f."id"
       FROM "OrderFulfillment" f
       JOIN "Order" o ON o."id" = f."orderId"
-      WHERE f."storeId" = ${store.id} AND o."status" = 'PAID'
+      WHERE f."storeId" = ${store.id} AND o."status" IN ('PAID', 'TEST_PAID')
       ORDER BY f."updatedAt" DESC
       LIMIT 100
     `;
@@ -180,7 +186,7 @@ export class OrdersService {
         JOIN "Order" o ON o."id" = f."orderId"
         WHERE f."id" = ${fulfillmentId}
           AND f."storeId" = ${store.id}
-          AND o."status" = 'PAID'
+          AND o."status" IN ('PAID', 'TEST_PAID')
         FOR UPDATE OF f
       `;
       if (!current) throw new NotFoundException("Commande introuvable ou paiement non confirmé.");
@@ -222,7 +228,7 @@ export class OrdersService {
         WHERE f."id" = ${fulfillmentId}
           AND f."orderId" = ${orderId}
           AND o."customerId" = ${customerId}
-          AND o."status" = 'PAID'
+          AND o."status" IN ('PAID', 'TEST_PAID')
         FOR UPDATE OF f
       `;
       if (!current) throw new NotFoundException("Commande introuvable ou paiement non confirmé.");

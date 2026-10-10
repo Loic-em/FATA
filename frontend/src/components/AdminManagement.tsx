@@ -3,6 +3,8 @@ import { Check, Eye, EyeOff, Flag, Pencil, RefreshCw, Save, ShieldAlert, Trash2,
 import { apiRequest, getFulfillmentStatusLabel, getOrderStatusLabel, type ApiOrder, type ApiProduct } from "../data/api";
 import { formatPrice } from "../data/orders";
 import AnalyticsDashboard from "./AnalyticsDashboard";
+import AccountSettings from "./AccountSettings";
+import AdminPlatformSettings from "./AdminPlatformSettings";
 
 type AdminTab = "Vue d'ensemble" | "Vendeurs" | "Produits" | "Commandes" | "Demandes contact" | "Signalements" | "Finances" | "Paramètres";
 type SellerApplication = {
@@ -331,19 +333,20 @@ export default function AdminManagement({ active, onNavigate }: { active: AdminT
           <ConfigCheck label="GENIUSPAY_WEBHOOK_URL HTTPS" ready={paymentConfig.webhookUrlConfigured}/>
         </div>
         <p className="payment-config-help">Renseignez les clés sandbox dans <code>backend/.env</code>, puis configurez l’URL HTTPS du webhook dans GeniusPay et redémarrez l’API. Gardez les clés secrètes uniquement côté serveur.</p>
-        <p className="payment-config-help">Le checkout hébergé GeniusPay laisse le client choisir son moyen de paiement. Un paiement sandbox ne déclenche ni livraison ni transfert au vendeur.</p>
+        <p className="payment-config-help">Le checkout hébergé GeniusPay reste sandbox et n’encaisse rien. Pour tester préparation et livraison sans argent, utilise la simulation interne dans une commande client.</p>
       </> : !loading && <EmptyMessage>Impossible de lire la configuration de paiement.</EmptyMessage>}
     </section>
   ) : (
-    <section className="workspace-panel full-panel">
-      <PanelHeading eyebrow="CONFIGURATION" title={active}/>
-      <div className="workspace-empty"><ShieldAlert size={25}/><strong>Configuration plateforme</strong><p>Les réglages sensibles doivent être configurés côté serveur avant la mise en production.</p></div>
-    </section>
+    <>
+      <AccountSettings section="profile"/>
+      <AccountSettings section="security"/>
+      <AdminPlatformSettings onNavigate={onNavigate}/>
+    </>
   );
 
   return <div className="admin-management">
     {error && <p className="form-error" role="alert">{error}</p>}
-    {loading && <p aria-busy="true">Chargement des données de l’administration…</p>}
+    {loading && <p className="loading-state" aria-busy="true"><span className="loading-spinner"/> Chargement des données de l’administration…</p>}
     {sections}
   </div>;
 }

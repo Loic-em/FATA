@@ -12,6 +12,7 @@ import SellerManagement from "../components/SellerManagement";
 import Messaging from "../components/Messaging";
 import AnalyticsDashboard from "../components/AnalyticsDashboard";
 import { FulfillmentProgress, SellerOrders } from "../components/OrderFulfillment";
+import AccountSettings from "../components/AccountSettings";
 
 type NavItem = { label: string; icon: typeof LayoutDashboard };
 const navByRole: Record<UserRole, NavItem[]> = {
@@ -133,13 +134,14 @@ export default function Dashboard() {
 
       {role !== "admin" && active === "Messages" && <Messaging key={`${searchParams.get("product") ?? "inbox"}:${searchParams.get("order") ?? ""}:${searchParams.get("conversation") ?? ""}`} role={role} initialProductId={searchParams.get("product") ?? undefined} initialOrderId={searchParams.get("order") ?? undefined} initialConversationId={searchParams.get("conversation") ?? undefined}/>}
 
-      {role === "client" && ["Mes adresses", "Paramètres"].includes(active) && <section className="workspace-panel full-panel"><div className="workspace-panel-heading"><div><span className="eyebrow">VOTRE COMPTE</span><h3>{active}</h3></div></div><div className="profile-detail"><div className="profile-detail-icon"><Store size={20}/></div><div><strong>{user?.name || "Votre nom"}</strong><span>{user?.email || "Connectez-vous pour personnaliser votre profil."}</span><small>Informations enregistrées dans cette démo locale.</small></div><Link className="button button-outline" to="/client/connexion">Gérer mon compte</Link></div></section>}
+      {role === "client" && active === "Mes adresses" && <AccountSettings section="address"/>}
+      {role === "client" && active === "Paramètres" && <><AccountSettings section="profile"/><AccountSettings section="security"/></>}
 
       {role === "vendeur" && active === "Mes produits" && <SellerManagement active="Mes produits"/>}
       {role === "vendeur" && active === "Ma boutique" && <SellerManagement active="Ma boutique"/>}
       {role === "vendeur" && active === "Revenus" && <AnalyticsDashboard role="seller"/>}
 {role === "vendeur" && active === "Commandes" && <SellerOrders key={sellerOrdersRefresh}/>}
-{role === "vendeur" && active === "Paramètres" && <section className="workspace-panel full-panel"><div className="workspace-panel-heading"><div><span className="eyebrow">ESPACE VENDEUR</span><h3>{active}</h3></div></div><div className="workspace-empty"><div className="empty-bag-icon"><Settings size={21}/></div><strong>Les réglages de votre boutique se trouveront ici.</strong><p>Ces fonctionnalités ne sont pas encore actives dans FATA.</p></div></section>}
+{role === "vendeur" && active === "Paramètres" && <><AccountSettings section="profile"/><SellerManagement active="Ma boutique"/><AccountSettings section="security"/><section className="workspace-panel full-panel settings-note-panel"><span className="eyebrow">PAIEMENTS EN MODE TEST</span><h3>Revenus et versements</h3><p>Les paiements simulés servent à parcourir les commandes et la livraison. Ils ne créent aucun revenu ni versement réel.</p></section></>}
 
       {role === "admin" && active === "Catégories" && <AdminCategories/>}
       {role === "admin" && active !== "Catégories" && <AdminManagement active={active as "Vue d'ensemble" | "Vendeurs" | "Produits" | "Commandes" | "Demandes contact" | "Signalements" | "Finances" | "Paramètres"} onNavigate={tab => setActive(tab)}/>}

@@ -83,7 +83,7 @@ export function getOrderStatusLabel(status: string): string {
 }
 
 export function getFulfillmentStatusLabel(status: ApiFulfillment["status"], orderStatus: string): string {
-  if (orderStatus !== "PAID") return "En attente du paiement";
+  if (orderStatus !== "PAID" && orderStatus !== "TEST_PAID") return "En attente du paiement";
   if (status === "PENDING") return "À préparer";
   if (status === "PREPARING") return "En préparation";
   if (status === "READY_FOR_PICKUP") return "Prête au retrait";

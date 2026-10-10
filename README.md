@@ -46,18 +46,20 @@ npm run preview
 - Inscription et connexion réelles, session protégée par cookie HttpOnly.
 - Inscription vendeur avec boutique en attente de validation.
 - Espace vendeur connecté à l'API : statut réel de la boutique, modification du profil public après approbation, création et suivi des produits soumis à validation.
+- Paramètres utilisables dans les trois espaces : profil et mot de passe, adresse et téléphone de livraison côté client, boutique côté vendeur, frais de livraison côté administration.
 - Gestion des catégories et sous-catégories depuis l'espace administrateur : création, modification, activation/désactivation ; suppression lorsqu'aucun produit ou sous-catégorie ne leur est rattaché.
 - Tableau de bord admin alimenté par les demandes vendeurs, la modération des produits et les commandes en base.
 - Détails des commandes accessibles à l'administration : articles, livraison, adresse et instructions, sans possibilité de déclarer un paiement reçu.
 - Approbation/refus des boutiques, modification, masquage et suppression des produits sans historique associé, ainsi qu'activation/désactivation des catégories.
 - Demandes de commande enregistrées dans PostgreSQL et consultables par leur cliente ; les prix et frais sont recalculés par l'API.
-- Préparation et livraison suivies séparément pour chaque boutique ; seuls les paiements réels confirmés ouvrent l'accès vendeur, puis le client confirme la réception.
+- Préparation et livraison suivies séparément pour chaque boutique ; une confirmation GeniusPay sandbox ou une simulation interne permet de parcourir le suivi vendeur, puis le client confirme la réception.
 - Notifications internes sur la préparation, l'expédition, le retrait prêt et la réception confirmée, liées à la commande et visibles seulement par leur destinataire.
 - Avis publiés uniquement après un paiement confirmé et reliés à l'article acheté ; le nom public du client est abrégé.
 - Messagerie client-vendeur persistante : démarrage depuis les fiches produits ou commandes, fils liés aux produits et commandes, notifications internes, suivi lu/non lu et signalements avec modération administrateur auditée.
 - Formulaire de contact relié à une boîte de réception réservée à l'administration ; les demandes peuvent être suivies et la réponse s'ouvre dans le logiciel e-mail de l'administrateur.
 - Les messages sont limités au texte et filtrent les liens, coordonnées téléphoniques ivoiriennes, e-mails et tentatives explicites de paiement hors FATA. La messagerie n'accepte ni pièces jointes ni paiement entre utilisateurs.
 - GeniusPay utilise un checkout hébergé et une confirmation du statut vérifiée par l'API ; les paiements sont limités au mode sandbox.
+- Simulations de paiement réussies, échouées ou en attente, sans appel au prestataire ni mouvement d'argent. Les commandes marquées `TEST_PAID` permettent de tester la préparation et la livraison ; elles ne comptent pas comme revenus et ne débloquent pas les avis vérifiés.
 - Panier conservé dans le navigateur.
 - Pages d'aide, contact, livraison, confidentialité et conditions.
 - Mise en page adaptée aux téléphones, tablettes et ordinateurs.
@@ -66,7 +68,7 @@ npm run preview
 
 Avant le premier paiement GeniusPay, applique la migration qui stocke la référence du prestataire depuis la racine avec `npm run prisma:deploy`.
 
-Les paiements réels restent désactivés. Pour tester GeniusPay, configure `GENIUSPAY_MODE="sandbox"`, `GENIUSPAY_API_KEY`, `GENIUSPAY_API_SECRET`, `GENIUSPAY_WEBHOOK_SECRET` et `GENIUSPAY_WEBHOOK_URL` dans `backend/.env`, puis redémarre l'API. Garde les clés privées dans l'API et utilise seulement les clés sandbox. Enregistre comme webhook l'URL HTTPS `https://<api-publique>/api/payments/geniuspay/notify` et abonne-la aux événements `payment.success`, `payment.failed`, `payment.cancelled` et `payment.expired`. Stocke le secret renvoyé lors de la création du webhook dans `GENIUSPAY_WEBHOOK_SECRET`. Le tableau de bord admin, onglet « Finances », indique si ces variables sont présentes sans en révéler les valeurs. Les confirmations sont marquées `TEST_PAID` et ne transmettent pas la commande à une boutique ; le suivi vendeur est réservé à un futur paiement réel confirmé. Les revenus/retraits et les favoris multi-appareils ne sont pas activés.
+Les paiements réels restent désactivés. Pour tester le checkout GeniusPay, configure `GENIUSPAY_MODE="sandbox"`, `GENIUSPAY_API_KEY`, `GENIUSPAY_API_SECRET`, `GENIUSPAY_WEBHOOK_SECRET` et `GENIUSPAY_WEBHOOK_URL` dans les variables privées du serveur, puis redémarre l'API. Garde les clés privées côté serveur et utilise seulement les clés sandbox. Enregistre comme webhook l'URL HTTPS `https://<api-publique>/api/payments/geniuspay/notify` et abonne-la aux événements `payment.success`, `payment.failed`, `payment.cancelled` et `payment.expired`. Stocke le secret renvoyé lors de la création du webhook dans `GENIUSPAY_WEBHOOK_SECRET`. Le tableau de bord admin, onglet « Finances », indique si ces variables sont présentes sans en révéler les valeurs. Pour simuler une commande sans argent, choisis une issue de paiement dans l'écran de confirmation : succès, échec ou attente. Une simulation réussie ouvre le suivi vendeur, mais ne compte pas comme revenu et ne permet pas de publier un avis vérifié. Les revenus/retraits et les favoris multi-appareils ne sont pas activés.
 
 La migration de messagerie est appliquée depuis la racine avec `npm run prisma:deploy`. Les conversations ne sont pas supprimées automatiquement afin de rester consultables ; FATA doit encore définir et publier la durée de conservation ainsi que le processus de suppression des données avant l'ouverture commerciale.
 

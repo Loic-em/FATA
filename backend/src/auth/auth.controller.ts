@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import type { AuthenticatedUser } from "./jwt.strategy";
 
@@ -31,6 +33,19 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@Req() request: Request & { user: AuthenticatedUser }) {
     return request.user;
+  }
+
+  @Patch("profile")
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@Req() request: Request & { user: AuthenticatedUser }, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(request.user.id, dto);
+  }
+
+  @Patch("password")
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  changePassword(@Req() request: Request & { user: AuthenticatedUser }, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(request.user.id, dto);
   }
 
   @Post("logout")

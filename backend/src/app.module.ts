@@ -15,6 +15,7 @@ import { MessagingModule } from "./messaging/messaging.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { ContactModule } from "./contact/contact.module";
+import { SettingsModule } from "./settings/settings.module";
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ContactModule } from "./contact/contact.module";
     AnalyticsModule,
     ReviewsModule,
     ContactModule,
+    SettingsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { ApiError, apiRequest } from "../data/api";
 
 export type UserRole = "client" | "vendeur" | "admin";
-export type User = { id: string; name: string; email: string; role: UserRole; status?: "en attente" | "validé" | "refusé"; storeName?: string };
-type ApiUser = { id: string; name: string; email: string; role: "CLIENT" | "SELLER" | "ADMIN"; sellerStatus?: "PENDING" | "APPROVED" | "REJECTED" | null; store?: { name: string } | null };
+export type User = { id: string; name: string; email: string; phone?: string | null; defaultCity?: string | null; defaultAddress?: string | null; role: UserRole; status?: "en attente" | "validé" | "refusé"; storeName?: string };
+type ApiUser = { id: string; name: string; email: string; phone?: string | null; defaultCity?: string | null; defaultAddress?: string | null; role: "CLIENT" | "SELLER" | "ADMIN"; sellerStatus?: "PENDING" | "APPROVED" | "REJECTED" | null; store?: { name: string } | null };
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
@@ -21,6 +21,9 @@ function mapUser(user: ApiUser): User {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone ?? null,
+    defaultCity: user.defaultCity ?? null,
+    defaultAddress: user.defaultAddress ?? null,
     role: user.role === "ADMIN" ? "admin" : user.role === "SELLER" ? "vendeur" : "client",
     ...(user.sellerStatus ? { status: user.sellerStatus === "APPROVED" ? "validé" as const : user.sellerStatus === "REJECTED" ? "refusé" as const : "en attente" as const } : {}),
     ...(user.store ? { storeName: user.store.name } : {}),

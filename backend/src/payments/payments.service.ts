@@ -58,6 +58,7 @@ export class PaymentsService {
       && !webhookUrl.includes("your-public-test-host.example");
     return {
       mode,
+      simulationEnabled: mode !== "live",
       configured: mode === "sandbox" && apiKeyConfigured && apiSecretConfigured
         && webhookSecretConfigured && webhookUrlConfigured,
       apiKeyConfigured,
@@ -65,6 +66,50 @@ export class PaymentsService {
       webhookSecretConfigured,
       webhookUrlConfigured,
     };
+  }
+
+  async simulatePayment(user: AuthenticatedUser, orderId: string, outcome: "SUCCESS" | "FAILED" | "PENDING") {
+    const mode = this.config.get<string>("GENIUSPAY_MODE")?.trim();
+    if (mode === "live") {
+      throw new ServiceUnavailableException("La simulation locale est désactivée hors sandbox.");
+    }
+
+    return this.prisma.$transaction(async transaction => {
+      await transaction.$queryRaw`SELECT "id" FROM "Order" WHERE "id" = ${orderId} AND "customerId" = ${user.id} FOR UPDATE`;
+      const order = await transaction.order.findFirst({ where: { id: orderId, customerId: user.id } });
+      if (!order) throw new NotFoundException("Commande introuvable.");
+      if (order.status !== "AWAITING_PAYMENT") {
+        throw new ConflictException("Cette commande ne peut plus recevoir de simulation de paiement.");
+      }
+
+      const transactionId = `FATASIM${randomUUID().replaceAll("-", "").slice(0, 20)}`;
+      const status = outcome === "SUCCESS" ? "SUCCEEDED" : outcome === "FAILED" ? "FAILED" : "PENDING";
+      await transaction.paymentAttempt.create({
+        data: {
+          orderId: order.id,
+          transactionId,
+          amount: order.total,
+          currency: CURRENCY,
+          status,
+          ...(outcome === "SUCCESS" ? { paidAt: new Date() } : {}),
+        },
+      });
+
+      if (outcome === "SUCCESS") {
+        await transaction.order.update({
+          where: { id: order.id },
+          data: { status: "TEST_PAID", paymentMethod: "SIMULATION" },
+        });
+      }
+
+      return {
+        transactionId,
+        orderStatus: outcome === "SUCCESS" ? "TEST_PAID" : "AWAITING_PAYMENT",
+        paymentStatus: status,
+        mode: "sandbox" as const,
+        simulation: true as const,
+      };
+    });
   }
 
   async startCheckout(user: AuthenticatedUser, orderId: string) {

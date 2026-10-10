@@ -100,7 +100,7 @@ export default function AnalyticsDashboard({ role }: { role: "admin" | "seller" 
   }, [report, role]);
 
   if (error && !report) return <section className="workspace-panel full-panel analytics-panel" aria-live="polite"><h3>Statistiques indisponibles</h3><p className="form-error">{error}</p></section>;
-  if (!report) return <section className="workspace-panel full-panel analytics-panel" aria-busy="true">Chargement des statistiques…</section>;
+  if (!report) return <section className="workspace-panel full-panel analytics-panel loading-state" aria-busy="true"><span className="loading-spinner"/> Chargement des statistiques…</section>;
 
   const activitySeries = role === "admin"
     ? [{ key: "visits" as const, label: "Visites du site", color: "#6b5685" }, { key: "storeViews" as const, label: "Visites boutique", color: "#a07dbe" }, { key: "productViews" as const, label: "Vues produits", color: "#c66f4e" }, { key: "cartAdds" as const, label: "Ajouts panier", color: "#56847a" }]

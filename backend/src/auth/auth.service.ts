@@ -6,6 +6,10 @@ import { UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+
+type ProfileExtras = { phone: string | null; defaultCity: string | null; defaultAddress: string | null };
 
 @Injectable()
 export class AuthService {
@@ -61,14 +65,47 @@ export class AuthService {
     if (!user || !validPassword) {
       throw new UnauthorizedException("Adresse e-mail ou mot de passe incorrect.");
     }
+    const [profile] = await this.prisma.$queryRaw<ProfileExtras[]>`
+      SELECT "phone", "defaultCity", "defaultAddress" FROM "User" WHERE "id" = ${user.id}
+    `;
     return this.createSession({
       id: user.id,
       name: user.name,
       email: user.email,
+      ...profile,
       role: user.role,
       sellerStatus: user.sellerStatus,
       store: user.store,
     });
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    await this.prisma.$executeRaw`
+      UPDATE "User"
+      SET "name" = ${dto.name.trim()},
+          "phone" = CASE WHEN ${dto.phone !== undefined} THEN NULLIF(${dto.phone?.trim() ?? ""}, '') ELSE "phone" END,
+          "defaultCity" = CASE WHEN ${dto.defaultCity !== undefined} THEN NULLIF(${dto.defaultCity?.trim() ?? ""}, '') ELSE "defaultCity" END,
+          "defaultAddress" = CASE WHEN ${dto.defaultAddress !== undefined} THEN NULLIF(${dto.defaultAddress?.trim() ?? ""}, '') ELSE "defaultAddress" END,
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${userId}
+    `;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true, sellerStatus: true, store: { select: { name: true } } },
+    });
+    const [profile] = await this.prisma.$queryRaw<ProfileExtras[]>`
+      SELECT "phone", "defaultCity", "defaultAddress" FROM "User" WHERE "id" = ${userId}
+    `;
+    return { ...user, ...profile };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+    if (!user || !(await compare(dto.currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException("Le mot de passe actuel est incorrect.");
+    }
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: await hash(dto.newPassword, 12) } });
+    return { success: true };
   }
 
   private async createSession(user: {
@@ -76,6 +113,9 @@ export class AuthService {
     name: string;
     email: string;
     role: string;
+    phone?: string | null;
+    defaultCity?: string | null;
+    defaultAddress?: string | null;
     sellerStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
     store?: { name: string } | null;
   }) {

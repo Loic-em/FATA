@@ -6,6 +6,7 @@ import type { AuthenticatedUser } from "../auth/jwt.strategy";
 import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { PaymentsService } from "./payments.service";
+import { SimulatePaymentDto } from "./dto/simulate-payment.dto";
 
 @Controller("payments")
 export class PaymentsController {
@@ -29,6 +30,18 @@ export class PaymentsController {
     @Param("orderId") orderId: string,
   ) {
     return this.payments.getPaymentStatus(request.user, orderId);
+  }
+
+  @Post("simulation/orders/:orderId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("CLIENT")
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  simulatePayment(
+    @Req() request: Request & { user: AuthenticatedUser },
+    @Param("orderId") orderId: string,
+    @Body() body: SimulatePaymentDto,
+  ) {
+    return this.payments.simulatePayment(request.user, orderId, body.outcome);
   }
 
   @Get("geniuspay/admin/config")

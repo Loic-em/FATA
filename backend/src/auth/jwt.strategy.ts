@@ -8,6 +8,9 @@ export type AuthenticatedUser = {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
+  defaultCity: string | null;
+  defaultAddress: string | null;
   role: "CLIENT" | "SELLER" | "ADMIN";
   sellerStatus: "PENDING" | "APPROVED" | "REJECTED" | null;
   store: { name: string } | null;
@@ -43,6 +46,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
     if (!user) throw new UnauthorizedException();
-    return user;
+    const [profile] = await this.prisma.$queryRaw<{ phone: string | null; defaultCity: string | null; defaultAddress: string | null }[]>`
+      SELECT "phone", "defaultCity", "defaultAddress" FROM "User" WHERE "id" = ${user.id}
+    `;
+    return { ...user, ...profile };
   }
 }
