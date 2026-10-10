@@ -60,6 +60,12 @@ enum FulfillmentStatus {
   DELIVERED
 }
 
+enum ContactRequestStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+}
+
 model User {
   id           String       @id @default(cuid())
   name         String
@@ -351,4 +357,17 @@ model ProductReview {
 
   @@index([productId, createdAt])
   @@index([userId, createdAt])
+}
+
+model ContactRequest {
+  id        String               @id @default(cuid())
+  name      String               @db.VarChar(120)
+  email     String               @db.VarChar(254)
+  subject   String               @db.VarChar(20)
+  message   String               @db.VarChar(2000)
+  status    ContactRequestStatus @default(NEW)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([status, createdAt])
 }

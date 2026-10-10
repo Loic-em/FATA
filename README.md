@@ -55,6 +55,7 @@ npm run preview
 - Notifications internes sur la préparation, l'expédition, le retrait prêt et la réception confirmée, liées à la commande et visibles seulement par leur destinataire.
 - Avis publiés uniquement après un paiement confirmé et reliés à l'article acheté ; le nom public du client est abrégé.
 - Messagerie client-vendeur persistante : démarrage depuis les fiches produits ou commandes, fils liés aux produits et commandes, notifications internes, suivi lu/non lu et signalements avec modération administrateur auditée.
+- Formulaire de contact relié à une boîte de réception réservée à l'administration ; les demandes peuvent être suivies et la réponse s'ouvre dans le logiciel e-mail de l'administrateur.
 - Les messages sont limités au texte et filtrent les liens, coordonnées téléphoniques ivoiriennes, e-mails et tentatives explicites de paiement hors FATA. La messagerie n'accepte ni pièces jointes ni paiement entre utilisateurs.
 - GeniusPay utilise un checkout hébergé et une confirmation du statut vérifiée par l'API ; les paiements sont limités au mode sandbox.
 - Panier conservé dans le navigateur.

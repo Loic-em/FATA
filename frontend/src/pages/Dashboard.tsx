@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownRight, ArrowLeft, ArrowRight, Bell, Boxes, Check, CircleHelp, CreditCard, Flag, Heart, LayoutDashboard, LogOut, MessageCircle, Package, Plus, RefreshCw, Settings, ShieldCheck, ShoppingBag, Store, Wallet, X } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, ArrowRight, Bell, Boxes, Check, CircleHelp, CreditCard, Flag, Heart, LayoutDashboard, LogOut, Mail, MessageCircle, Package, Plus, RefreshCw, Settings, ShieldCheck, ShoppingBag, Store, Wallet, X } from "lucide-react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth, type UserRole } from "../context/AuthContext";
 import { formatPrice } from "../data/orders";
@@ -17,7 +17,7 @@ type NavItem = { label: string; icon: typeof LayoutDashboard };
 const navByRole: Record<UserRole, NavItem[]> = {
   client: [{ label: "Vue d'ensemble", icon: LayoutDashboard }, { label: "Mes commandes", icon: Package }, { label: "Messages", icon: MessageCircle }, { label: "Mes favoris", icon: Heart }, { label: "Mes adresses", icon: Store }, { label: "Paramètres", icon: Settings }],
   vendeur: [{ label: "Vue d'ensemble", icon: LayoutDashboard }, { label: "Ma boutique", icon: Store }, { label: "Mes produits", icon: Boxes }, { label: "Commandes", icon: Package }, { label: "Messages", icon: MessageCircle }, { label: "Revenus", icon: Wallet }, { label: "Paramètres", icon: Settings }],
-  admin: [{ label: "Vue d'ensemble", icon: LayoutDashboard }, { label: "Catégories", icon: Boxes }, { label: "Vendeurs", icon: Store }, { label: "Produits", icon: Boxes }, { label: "Commandes", icon: Package }, { label: "Signalements", icon: Flag }, { label: "Finances", icon: CreditCard }, { label: "Paramètres", icon: Settings }],
+  admin: [{ label: "Vue d'ensemble", icon: LayoutDashboard }, { label: "Catégories", icon: Boxes }, { label: "Vendeurs", icon: Store }, { label: "Produits", icon: Boxes }, { label: "Commandes", icon: Package }, { label: "Demandes contact", icon: Mail }, { label: "Signalements", icon: Flag }, { label: "Finances", icon: CreditCard }, { label: "Paramètres", icon: Settings }],
 };
 
 export default function Dashboard() {
@@ -142,7 +142,7 @@ export default function Dashboard() {
 {role === "vendeur" && active === "Paramètres" && <section className="workspace-panel full-panel"><div className="workspace-panel-heading"><div><span className="eyebrow">ESPACE VENDEUR</span><h3>{active}</h3></div></div><div className="workspace-empty"><div className="empty-bag-icon"><Settings size={21}/></div><strong>Les réglages de votre boutique se trouveront ici.</strong><p>Ces fonctionnalités ne sont pas encore actives dans FATA.</p></div></section>}
 
       {role === "admin" && active === "Catégories" && <AdminCategories/>}
-      {role === "admin" && active !== "Catégories" && <AdminManagement active={active as "Vue d'ensemble" | "Vendeurs" | "Produits" | "Commandes" | "Signalements" | "Finances" | "Paramètres"} onNavigate={tab => setActive(tab)}/>}
+      {role === "admin" && active !== "Catégories" && <AdminManagement active={active as "Vue d'ensemble" | "Vendeurs" | "Produits" | "Commandes" | "Demandes contact" | "Signalements" | "Finances" | "Paramètres"} onNavigate={tab => setActive(tab)}/>}
       <div className="workspace-footer"><span><ShieldCheck size={14}/> FATA · Espace sécurisé</span><Link to="/">Retour à la boutique <ArrowRight size={14}/></Link></div>
     </div></div></div></section>;
 }

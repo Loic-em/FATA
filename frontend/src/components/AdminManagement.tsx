@@ -4,7 +4,7 @@ import { apiRequest, getFulfillmentStatusLabel, getOrderStatusLabel, type ApiOrd
 import { formatPrice } from "../data/orders";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 
-type AdminTab = "Vue d'ensemble" | "Vendeurs" | "Produits" | "Commandes" | "Signalements" | "Finances" | "Paramètres";
+type AdminTab = "Vue d'ensemble" | "Vendeurs" | "Produits" | "Commandes" | "Demandes contact" | "Signalements" | "Finances" | "Paramètres";
 type SellerApplication = {
   id: string;
   name: string;
@@ -42,12 +42,27 @@ type MessageReport = {
     messages: { id: string; body: string; sender: { name: string }; createdAt: string }[];
   };
 };
+type ContactRequest = {
+  id: string;
+  name: string;
+  email: string;
+  subject: "GENERAL" | "SELLER" | "ORDER" | "OTHER";
+  message: string;
+  status: "NEW" | "IN_PROGRESS" | "CLOSED";
+  createdAt: string;
+};
 
 const sellerStatusLabel: Record<SellerApplication["status"], string> = {
   PENDING: "À examiner",
   APPROVED: "Approuvée",
   REJECTED: "Refusée",
 };
+const contactSubjectLabel: Record<ContactRequest["subject"], string> = { GENERAL: "Question générale", SELLER: "Devenir vendeur", ORDER: "Commande", OTHER: "Autre" };
+const contactStatusLabel: Record<ContactRequest["status"], string> = { NEW: "Nouveau", IN_PROGRESS: "En cours", CLOSED: "Clôturé" };
+
+function contactMailto(request: ContactRequest) {
+  return `mailto:${request.email}?subject=${encodeURIComponent(`FATA — ${contactSubjectLabel[request.subject]}`)}`;
+}
 
 export default function AdminManagement({ active, onNavigate }: { active: AdminTab; onNavigate: (tab: AdminTab) => void }) {
   const [sellers, setSellers] = useState<SellerApplication[]>([]);
@@ -56,6 +71,7 @@ export default function AdminManagement({ active, onNavigate }: { active: AdminT
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [reports, setReports] = useState<MessageReport[]>([]);
+  const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -80,6 +96,8 @@ export default function AdminManagement({ active, onNavigate }: { active: AdminT
         setPaymentConfig(await apiRequest<PaymentConfig>("/payments/geniuspay/admin/config"));
       } else if (active === "Signalements") {
         setReports(await apiRequest<MessageReport[]>("/admin/message-reports"));
+      } else if (active === "Demandes contact") {
+        setContactRequests(await apiRequest<ContactRequest[]>("/admin/contact-requests"));
       } else if (active === "Vue d'ensemble") {
         const [sellerRows, productRows, orderRows, config] = await Promise.all([
           apiRequest<SellerApplication[]>("/stores/admin/sellers"),
@@ -208,6 +226,22 @@ export default function AdminManagement({ active, onNavigate }: { active: AdminT
     }
   }
 
+  async function updateContactRequest(request: ContactRequest, status: ContactRequest["status"]) {
+    setBusyId(request.id);
+    setError("");
+    try {
+      await apiRequest(`/admin/contact-requests/${encodeURIComponent(request.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Impossible de mettre à jour cette demande.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
   const pendingSellers = sellers.filter(seller => seller.status === "PENDING");
   const sections = active === "Vue d'ensemble" ? (
     <>
@@ -267,6 +301,16 @@ export default function AdminManagement({ active, onNavigate }: { active: AdminT
     <section className="workspace-panel full-panel">
       <PanelHeading eyebrow="SÉCURITÉ ET CONFIANCE" title="Signalements de messages"/>
       {reports.length ? <div className="message-report-list">{reports.map(report => <MessageReportRow key={report.id} report={report} busy={busyId === report.id} onReview={(status, action, resolution) => void reviewReport(report.id, status, action, resolution)}/>)}</div> : !loading && <EmptyMessage>Aucun signalement de message.</EmptyMessage>}
+    </section>
+  ) : active === "Demandes contact" ? (
+    <section className="workspace-panel full-panel">
+      <PanelHeading eyebrow="ASSISTANCE FATA" title="Demandes reçues via le formulaire"/>
+      {contactRequests.length ? <div className="contact-request-list">{contactRequests.map(request => <article className="contact-request-row" key={request.id}>
+        <header className="contact-request-header"><div><strong>{request.name}</strong><a href={contactMailto(request)}>{request.email}</a></div><span className={`status-pill ${request.status === "CLOSED" ? "status-approved" : "status-pending"}`}>{contactStatusLabel[request.status]}</span></header>
+        <small>{contactSubjectLabel[request.subject]} · {new Date(request.createdAt).toLocaleString("fr-FR")}</small>
+        <p className="contact-request-message">{request.message}</p>
+        <div className="contact-request-actions"><a className="button button-outline" href={contactMailto(request)}>Répondre par e-mail</a>{request.status === "NEW" && <button type="button" disabled={busyId === request.id} onClick={() => void updateContactRequest(request, "IN_PROGRESS")}>Prendre en charge</button>}{request.status !== "CLOSED" && <button type="button" disabled={busyId === request.id} onClick={() => void updateContactRequest(request, "CLOSED")}>Clôturer</button>}</div>
+      </article>)}</div> : !loading && <EmptyMessage>Aucune demande de contact reçue.</EmptyMessage>}
     </section>
   ) : active === "Finances" ? (
     <section className="workspace-panel full-panel">
