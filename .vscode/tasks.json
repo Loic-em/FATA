@@ -1,0 +1,113 @@
+{
+    "version":  "2.0.0",
+    "tasks":  [
+                  {
+                      "label":  "Install FATA API dependencies",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "run",
+                                   "install:backend"
+                               ],
+                      "isBackground":  false
+                  },
+                  {
+                      "label":  "Build FATA frontend",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "run",
+                                   "build:frontend"
+                               ],
+                      "isBackground":  false,
+                      "problemMatcher":  [
+                                             "$tsc"
+                                         ]
+                  },
+                  {
+                      "label":  "Build FATA API",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "run",
+                                   "build:backend"
+                               ],
+                      "isBackground":  false,
+                      "problemMatcher":  [
+                                             "$tsc"
+                                         ]
+                  },
+                  {
+                      "label":  "Generate FATA database client",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "run",
+                                   "prisma:generate"
+                               ],
+                      "isBackground":  false
+                  },
+                  {
+                      "label":  "Apply FATA database migrations",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "run",
+                                   "prisma:deploy"
+                               ],
+                      "isBackground":  false
+                  },
+                  {
+                      "label":  "Audit FATA API dependencies",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "audit",
+                                   "--prefix",
+                                   "backend"
+                               ],
+                      "isBackground":  false
+                  },
+                  {
+                      "label":  "Validate FATA Prisma schema",
+                      "type":  "shell",
+                      "options":  {
+                                      "env":  {
+                                                  "DIRECT_URL":  "postgresql://USER:PASSWORD@localhost:5432/fata?schema=public",
+                                                  "DATABASE_URL":  "postgresql://postgres:postgres@localhost:5432/fata?schema=public"
+                                              }
+                                  },
+                      "command":  "npm",
+                      "isBackground":  false,
+                      "args":  [
+                                   "run",
+                                   "prisma:validate"
+                               ]
+                  },
+                  {
+                      "label":  "Inspect Prisma security dependency",
+                      "type":  "shell",
+                      "command":  "npm ls --prefix backend deepmerge-ts prisma @prisma/config",
+                      "isBackground":  false
+                  },
+                  {
+                      "label":  "Get FATA API audit details",
+                      "type":  "shell",
+                      "command":  "npm audit --prefix backend",
+                      "isBackground":  false
+                  },
+                  {
+                      "label":  "Start FATA API",
+                      "type":  "shell",
+                      "command":  "npm",
+                      "args":  [
+                                   "run",
+                                   "dev:backend"
+                               ],
+                      "isBackground":  true,
+                      "problemMatcher":  [
+                                             "$tsc-watch"
+                                         ]
+                  }
+              ]
+}

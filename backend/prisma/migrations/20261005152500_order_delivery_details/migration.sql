@@ -1,0 +1,3 @@
+ALTER TABLE "Order"
+ADD COLUMN "deliveryType" TEXT NOT NULL DEFAULT 'DELIVERY',
+ADD COLUMN "instructions" TEXT;
