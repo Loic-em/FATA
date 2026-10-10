@@ -52,7 +52,7 @@ export class PaymentsService {
     const mode = this.config.get<string>("GENIUSPAY_MODE")?.trim() ?? "disabled";
     const apiKeyConfigured = this.config.get<string>("GENIUSPAY_API_KEY")?.trim().startsWith("pk_sandbox_") ?? false;
     const apiSecretConfigured = this.config.get<string>("GENIUSPAY_API_SECRET")?.trim().startsWith("sk_sandbox_") ?? false;
-    const webhookSecretConfigured = Boolean(this.config.get<string>("GENIUSPAY_WEBHOOK_SECRET")?.trim());
+    const webhookSecretConfigured = Boolean(this.getWebhookSecret());
     const webhookUrl = this.config.get<string>("GENIUSPAY_WEBHOOK_URL")?.trim() ?? "";
     const webhookUrlConfigured = this.isHttpsUrl(webhookUrl)
       && !webhookUrl.includes("your-public-test-host.example");
@@ -234,7 +234,7 @@ export class PaymentsService {
     headers: { signature?: string; timestamp?: string; event?: string; environment?: string },
   ) {
     this.requireApiConfig();
-    const secret = this.config.get<string>("GENIUSPAY_WEBHOOK_SECRET")?.trim();
+    const secret = this.getWebhookSecret();
     if (!secret) throw new ServiceUnavailableException("Le secret webhook GeniusPay n’est pas configuré.");
 
     const { signature, timestamp, event, environment } = headers;
@@ -279,6 +279,7 @@ export class PaymentsService {
     const response = await this.request<GeniusPayResponse<GeniusPayPayment>>(
       `/payments/${encodeURIComponent(providerReference)}`,
       { headers: this.apiHeaders(config) },
+      7_000,
     );
     const payment = response.data;
     if (response.success !== true || !payment || payment.reference !== providerReference
@@ -342,12 +343,12 @@ export class PaymentsService {
     };
   }
 
-  private async request<T>(path: string, init: RequestInit): Promise<T> {
+  private async request<T>(path: string, init: RequestInit, timeoutMs = 12_000): Promise<T> {
     let response: Response;
     try {
       response = await fetch(`${GENIUSPAY_API}${path}`, {
         ...init,
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch {
       throw new BadGatewayException("GeniusPay est momentanément injoignable.");
@@ -367,6 +368,12 @@ export class PaymentsService {
       where: { id: attemptId, status: { in: ["INITIALIZING", "PENDING"] } },
       data: { status: "FAILED" },
     });
+  }
+
+  private getWebhookSecret() {
+    return this.config.get<string>("GENIUSPAY_WEBHOOK_SECRET_SANDBOX")?.trim()
+      || this.config.get<string>("GENIUSPAY_WEBHOOK_SECRET")?.trim()
+      || "";
   }
 
   private normalizePhone(value: string) {

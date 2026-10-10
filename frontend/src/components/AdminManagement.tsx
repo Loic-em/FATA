@@ -329,10 +329,10 @@ export default function AdminManagement({ active, onNavigate }: { active: AdminT
           <ConfigCheck label="GENIUSPAY_MODE=sandbox" ready={paymentConfig.mode === "sandbox"}/>
           <ConfigCheck label="GENIUSPAY_API_KEY" ready={paymentConfig.apiKeyConfigured}/>
           <ConfigCheck label="GENIUSPAY_API_SECRET" ready={paymentConfig.apiSecretConfigured}/>
-          <ConfigCheck label="GENIUSPAY_WEBHOOK_SECRET" ready={paymentConfig.webhookSecretConfigured}/>
+          <ConfigCheck label="Secret du webhook sandbox" ready={paymentConfig.webhookSecretConfigured}/>
           <ConfigCheck label="GENIUSPAY_WEBHOOK_URL HTTPS" ready={paymentConfig.webhookUrlConfigured}/>
         </div>
-        <p className="payment-config-help">Renseignez les clés sandbox dans <code>backend/.env</code>, puis configurez l’URL HTTPS du webhook dans GeniusPay et redémarrez l’API. Gardez les clés secrètes uniquement côté serveur.</p>
+        <p className="payment-config-help">Configurez le secret reçu pour le webhook Sandbox dans <code>GENIUSPAY_WEBHOOK_SECRET_SANDBOX</code> (ou gardez <code>GENIUSPAY_WEBHOOK_SECRET</code> pour compatibilité), puis renseignez l’URL HTTPS du webhook dans GeniusPay et redémarrez l’API. Gardez les clés secrètes uniquement côté serveur.</p>
         <p className="payment-config-help">Le checkout hébergé GeniusPay reste sandbox et n’encaisse rien. Pour tester préparation et livraison sans argent, utilise la simulation interne dans une commande client.</p>
       </> : !loading && <EmptyMessage>Impossible de lire la configuration de paiement.</EmptyMessage>}
     </section>
