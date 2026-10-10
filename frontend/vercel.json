@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://TON-BACKEND.onrender.com/api/:path*" },
+    { "source": "/api/:path*", "destination": "https://https://fata.onrender.com/api/:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
