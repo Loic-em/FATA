@@ -233,7 +233,9 @@ export class PaymentsService {
     rawBody: Buffer | undefined,
     headers: { signature?: string; timestamp?: string; event?: string; environment?: string },
   ) {
-    this.requireApiConfig();
+    if (this.config.get<string>("GENIUSPAY_MODE")?.trim() !== "sandbox") {
+      throw new ServiceUnavailableException("Les notifications GeniusPay sont disponibles en mode sandbox uniquement.");
+    }
     const secret = this.getWebhookSecret();
     if (!secret) throw new ServiceUnavailableException("Le secret webhook GeniusPay n’est pas configuré.");
 
