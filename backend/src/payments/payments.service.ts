@@ -50,8 +50,11 @@ export class PaymentsService {
 
   getAdminConfig() {
     const mode = this.config.get<string>("GENIUSPAY_MODE")?.trim() ?? "disabled";
-    const apiKeyConfigured = this.config.get<string>("GENIUSPAY_API_KEY")?.trim().startsWith("pk_sandbox_") ?? false;
-    const apiSecretConfigured = this.config.get<string>("GENIUSPAY_API_SECRET")?.trim().startsWith("sk_sandbox_") ?? false;
+    const apiKey = this.config.get<string>("GENIUSPAY_API_KEY")?.trim() ?? "";
+    const apiSecret = this.config.get<string>("GENIUSPAY_API_SECRET")?.trim() ?? "";
+    const apiKeyConfigured = apiKey.startsWith("pk_sandbox_") || apiKey.startsWith("sk_sandbox_");
+    const apiSecretConfigured = apiSecret.startsWith("sk_sandbox_") || apiSecret.startsWith("ss");
+    const compatibleApiPair = this.hasSandboxApiPair(apiKey, apiSecret);
     const webhookSecretConfigured = Boolean(this.getWebhookSecret());
     const webhookUrl = this.config.get<string>("GENIUSPAY_WEBHOOK_URL")?.trim() ?? "";
     const webhookUrlConfigured = this.isHttpsUrl(webhookUrl)
@@ -59,7 +62,7 @@ export class PaymentsService {
     return {
       mode,
       simulationEnabled: mode !== "live",
-      configured: mode === "sandbox" && apiKeyConfigured && apiSecretConfigured
+      configured: mode === "sandbox" && compatibleApiPair
         && webhookSecretConfigured && webhookUrlConfigured,
       apiKeyConfigured,
       apiSecretConfigured,
@@ -327,13 +330,19 @@ export class PaymentsService {
     if (!apiKey || !apiSecret || !returnUrl) {
       throw new ServiceUnavailableException("Configuration incomplète : renseignez les clés sandbox GeniusPay dans backend/.env.");
     }
-    if (!apiKey.startsWith("pk_sandbox_") || !apiSecret.startsWith("sk_sandbox_")) {
+    if (!this.hasSandboxApiPair(apiKey, apiSecret)) {
       throw new ServiceUnavailableException("Seules les clés sandbox GeniusPay sont autorisées ; les paiements réels sont désactivés.");
     }
     if (!this.isHttpUrl(returnUrl)) {
       throw new ServiceUnavailableException("WEB_ORIGIN doit être une URL HTTP(S) valide pour le retour GeniusPay.");
     }
     return { apiKey, apiSecret, returnUrl: returnUrl.replace(/\/+$/, "") };
+  }
+
+  private hasSandboxApiPair(apiKey: string, apiSecret: string) {
+    const documentedPair = apiKey.startsWith("pk_sandbox_") && apiSecret.startsWith("sk_sandbox_");
+    const dashboardPair = apiKey.startsWith("sk_sandbox_") && apiSecret.startsWith("ss");
+    return documentedPair || dashboardPair;
   }
 
   private apiHeaders(config: GeniusPayConfig) {
